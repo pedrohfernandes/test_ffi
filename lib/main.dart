@@ -1,6 +1,35 @@
 import 'package:flutter/material.dart';
+import 'dart:ffi';
+import 'package:ffi/ffi.dart';
+
+class FFIBridge {
+  static bool initialize() {
+    nativeApiLib = (DynamicLibrary.open('libapi.so')); // android and linux
+    final _add = nativeApiLib
+        .lookup<NativeFunction<Int32 Function(Int32, Int32)>>('add');
+    add = _add.asFunction<int Function(int, int)>();
+
+    final _cap = nativeApiLib.lookup<
+        NativeFunction<Pointer<Utf8> Function(Pointer<Utf8>)>>('capitalize');
+    _capitalize = _cap.asFunction<Pointer<Utf8> Function(Pointer<Utf8>)>();
+
+    return true;
+  }
+
+  static late DynamicLibrary nativeApiLib;
+  static late Function add;
+  static late Function _capitalize;
+
+  static String capitalize(String str) {
+    final _str = str.toNativeUtf8();
+    Pointer<Utf8> res = _capitalize(_str);
+    calloc.free(_str);
+    return res.toDartString();
+  }
+}
 
 void main() {
+  FFIBridge.initialize();
   runApp(const MyApp());
 }
 
@@ -105,6 +134,14 @@ class _MyHomePageState extends State<MyHomePage> {
           // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            Text(
+              'capitalize flutter=${FFIBridge.capitalize('flutter')}',
+              style: const TextStyle(fontSize: 40),
+            ),
+            Text(
+              '1+2=${FFIBridge.add(1, 2)}',
+              style: const TextStyle(fontSize: 40),
+            ),
             const Text(
               'You have pushed the button this many times:',
             ),
