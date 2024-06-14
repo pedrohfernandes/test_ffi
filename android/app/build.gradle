@@ -23,6 +23,12 @@ if (flutterVersionName == null) {
 }
 
 android {
+    externalNativeBuild {
+        cmake {
+            path "../../libs/CMakeLists.txt"
+        }
+    }
+    
     namespace "br.com.pedrohfernandes.test_ffi"
     compileSdkVersion flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
